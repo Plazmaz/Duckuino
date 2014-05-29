@@ -1,41 +1,34 @@
-	var specialCodes = ["GUI", "CTRL", "CONTROL", "SHIFT", "WINDOWS", "MENU", "STRING", "DELAY", "ESC", "END", "SPACE", "TAB", "PRINTSCREEN",
-									"UPARROW", "DOWNARROW", "LEFTARROW", "RIGHTARROW", "CAPSLOCK", "DELETE", "ENTER", "ALT"];
+	var functions = ["ALT", "GUI", "CTRL", "CONTROL", "SHIFT", "WINDOWS", "MENU", "ESC", "END", "SPACE", "TAB", "PRINTSCREEN",
+									"UPARROW", "DOWNARROW", "LEFTARROW", "RIGHTARROW", "CAPSLOCK", "DELETE"];
 	
 function parseScript(){
 	var input = document.getElementById("duckyscript").value;
 	var script = input.split('\n');
 	for(var i = 0; i < script.length; i++) {
 		var line = script[i];
+		var isModifier = isModifierFunction(line);
 		line = line.replace("\n", "").trim();
-		for(var j = 0; j < 6; j++) {	//Only replace the first six codes
-			if(line.indexOf(specialCodes[j]) != -1) {
-				if(line.substr(0, specialCodes[j].length) === specialCodes[j]) {
-					var keysToType = pressKeys(line.replace(" ", "").substr(specialCodes[j].length));
-					var selectedCode = specialCodes[j];
-					if(selectedCode === "CONTROL")		//**********************
-						selectedCode = "CTRL"			//*Adding basic aliases*
-					if(selectedCode === "WINDOWS")		//**********************
-						selectedCode = "GUI";
-					
-					line = "Keyboard.press(KEY_LEFT_"+ selectedCode + ");"
-					+"\n" + keysToType
-					+"\n	Keyboard.releaseAll();\n";
-					script[i] = line;
-				}
-			}
+		var keysToPress = "";
+		for(var j = 0; j < functions.length; j++) {
+			keysToPress.replace(functions[j], "");
 		}
+		script[i] = line;
 		if(line.substr(0, 6) === "STRING") {
 			line = pressKeys(line.replace(" ", "").substr(6));
 		};
 		for(var j = 0; j < 12; j++) {
 			line = replaceValWhereNeeded(line, "F" + j, "Keyboard.press(KEY_F" + j + ");");
 		}
+		if(isModifier)
+			keysToPress = pressKeys(keysToPress);
 		line = replaceSpecial(line);
+		if(isModifier)
+			line += keysToPress + "\nKeyboard.releaseAll();";
 		line += "\n";
-		script[i] = "	" + line;
+		script[i] = "\t" + line;
 	}
 	
-	var output = script.join("");
+	var output = script.join("\n");
 	output = "\nvoid setup() {"
 			 + "\n	Keyboard.begin();"
 			 + "\n" + output;
@@ -60,26 +53,51 @@ function replaceSpecial(line) {
 			line = line.replace("REM ", "//");
 			return line;
 		}
-		//line = replaceValWhereNeeded(line, "GUI", "type(KEY_LEFT_GUI);");
-		line = replaceValWhereNeeded(line, "MENU", "Mouse.press(MOUSE_LEFT);\n	Mouse.release(MOUSE_LEFT);");
-		//line = replaceValWhereNeeded(line, "SHIFT", "type(KEY_LEFT_SHIFT);");
-		line = replaceFunctionWhereNeeded(line, "DELAY ", "delay");
-		//line = replaceValWhereNeeded(line, "ALT", "type(KEY_LEFT_ALT);");
-		//line = replaceValWhereNeeded(line, /[CTRL|CONTROL]/g, "type(KEY_LEFT_CTRL);");
-		line = replaceValWhereNeeded(line, "ESC", "type(KEY_LEFT_ESC);");
-		line = replaceValWhereNeeded(line, "END", "type(KEY_END);");
-		line = replaceValWhereNeeded(line, "ALT", "type(KEY_LEFT_ALT);");
-		line = replaceValWhereNeeded(line, "SPACE", "type(' ');");
-		line = replaceValWhereNeeded(line, "ENTER", "type(KEY_RETURN);");
-		line = replaceValWhereNeeded(line, "TAB", "type(KEY_TAB);");
-		line = replaceValWhereNeeded(line, "PRINTSCREEN", "type(206);");
-		
-		line = replaceValWhereNeeded(line, "UPARROW", "   type(KEY_UP_ARROW);");
-		line = replaceValWhereNeeded(line, "DOWNARROW", "type(KEY_DOWN_ARROW);");
-		line = replaceValWhereNeeded(line, "LEFTARROW", "type(KEY_LEFT_ARROW);");
-		line = replaceValWhereNeeded(line, "RIGHTARROW", "type(KEY_RIGHT_ARROW);");
-		line = replaceValWhereNeeded(line, "CAPSLOCK", "type(KEY_CAPS_LOCK);");
-		line = replaceValWhereNeeded(line, "DELETE", "type(KEY_DELETE);")
+		if(!isModifierFunction(line)) {
+			line = replaceValWhereNeeded(line, "GUI", "\ntype(KEY_LEFT_GUI);");
+			line = replaceValWhereNeeded(line, "WINDOWS", "\ntype(KEY_LEFT_GUI);");
+			line = replaceValWhereNeeded(line, "MENU", "Mouse.press(MOUSE_LEFT);\n	Mouse.release(MOUSE_LEFT);");
+			line = replaceValWhereNeeded(line, "SHIFT", "\ntype(KEY_LEFT_SHIFT);");
+			line = replaceValWhereNeeded(line, "ALT", "\ntype(KEY_LEFT_ALT);");
+			line = replaceValWhereNeeded(line, "CTRL", "\ntype(KEY_LEFT_CTRL);");
+			line = replaceValWhereNeeded(line, "CONTROL", "\ntype(KEY_LEFT_CTRL);");
+			line = replaceValWhereNeeded(line, "ESC", "\ntype(KEY_LEFT_ESC);");
+			line = replaceValWhereNeeded(line, "END", "\ntype(KEY_END);");
+			line = replaceValWhereNeeded(line, "SPACE", "\ntype(' ');");
+			line = replaceValWhereNeeded(line, "ENTER", "\ntype(KEY_RETURN);");
+			line = replaceValWhereNeeded(line, "TAB", "\ntype(KEY_TAB);");
+			line = replaceValWhereNeeded(line, "PRINTSCREEN", "\ntype(206);");
+			
+			line = replaceValWhereNeeded(line, "UPARROW", "   type(KEY_UP_ARROW);");
+			line = replaceValWhereNeeded(line, "DOWNARROW", "\ntype(KEY_DOWN_ARROW);");
+			line = replaceValWhereNeeded(line, "LEFTARROW", "\ntype(KEY_LEFT_ARROW);");
+			line = replaceValWhereNeeded(line, "RIGHTARROW", "\ntype(KEY_RIGHT_ARROW);");
+			line = replaceValWhereNeeded(line, "CAPSLOCK", "\ntype(KEY_CAPS_LOCK);");
+			line = replaceValWhereNeeded(line, "DELETE", "\ntype(KEY_DELETE);")
+		} else {
+			line = replaceValWhereNeeded(line, "GUI", "\npress(KEY_LEFT_GUI);");
+			line = replaceValWhereNeeded(line, "WINDOWS", "\npress(KEY_LEFT_GUI);");
+			line = replaceValWhereNeeded(line, "MENU", "Mouse.press(MOUSE_LEFT);\n	Mouse.release(MOUSE_LEFT);");
+			line = replaceValWhereNeeded(line, "SHIFT", "\npress(KEY_LEFT_SHIFT);");
+			line = replaceValWhereNeeded(line, "ALT", "\npress(KEY_LEFT_ALT);");
+			line = replaceValWhereNeeded(line, "CONTROL", "\npress(KEY_LEFT_CTRL);");
+			line = replaceValWhereNeeded(line, "CTRL", "\npress(KEY_LEFT_CTRL);");
+			line = replaceValWhereNeeded(line, "ESC", "\npress(KEY_LEFT_ESC);");
+			line = replaceValWhereNeeded(line, "END", "\npress(KEY_END);");
+			line = replaceValWhereNeeded(line, "SPACE", "\npress(' ');");
+			line = replaceValWhereNeeded(line, "ENTER", "\npress(KEY_RETURN);");
+			line = replaceValWhereNeeded(line, "TAB", "\npress(KEY_TAB);");
+			line = replaceValWhereNeeded(line, "PRINTSCREEN", "\npress(206);");
+			
+			line = replaceValWhereNeeded(line, "UPARROW", "\npress(KEY_UP_ARROW);");
+			line = replaceValWhereNeeded(line, "DOWNARROW", "\npress(KEY_DOWN_ARROW);");
+			line = replaceValWhereNeeded(line, "LEFTARROW", "\npress(KEY_LEFT_ARROW);");
+			line = replaceValWhereNeeded(line, "RIGHTARROW", "\npress(KEY_RIGHT_ARROW);");
+			line = replaceValWhereNeeded(line, "CAPSLOCK", "\npress(KEY_CAPS_LOCK);");
+			line = replaceValWhereNeeded(line, "DELETE", "\npress(KEY_DELETE);")
+
+		}
+			line = "	" + replaceFunctionWhereNeeded(line, "DELAY ", "delay");
 		return line
 }
 //Press and release keys
@@ -92,7 +110,7 @@ function typeKeys(keys) {
 			if(keys.charAt(i) == ' ')
 				continue;
 			keyStr += i != 0 ? "\n" : "";
-			keyStr += " 	type(" + keys.charCodeAt(i) + ");";
+			keyStr += "\n 	type(" + keys.charCodeAt(i) + ");";
 		}
 		return keyStr;
 }
@@ -103,17 +121,17 @@ function pressKeys(keys) {
 		}
 		var keyStr = "";
 		var hasFoundSpecial = false;
-		for(var i = 0; i < specialCodes.length; i++) {
-			if(keys.indexOf(specialCodes[i]) != -1) {
-				keys = keys.replace(specialCodes[i], "");
+		for(var i = 0; i < functions.length; i++) {
+			if(keys.indexOf(functions[i]) != -1) {
+				keys = keys.replace(functions[i], "");
 				hasFoundSpecial = true;
-				keyStr += "\n" + specialCodes[i];
+				keyStr += "\n" + functions[i];
 			}
 		}
 		keys = keys.replace(/\\/g, "\\\\");
 		keys = keys.replace(/"/g, "\\\"");
 		if(!hasFoundSpecial) {
-			keyStr += "\n	print(F(\"" + keys + "\"));";
+			keyStr += "\nprint(F(\"" + keys + "\"));";
 		}
 		return keyStr;
 }
@@ -123,11 +141,15 @@ function replaceValWhereNeeded(line, orig, replacement) {
 		return line;
 	return line.replace(orig, replacement);
 }
+function isModifierFunction(line) {
+	return functions.indexOf(line.split(" ")[0]) != -1;
+}
 //A similar function to replaceValWhereNeeded, but surrounding arguments with parentheses and adding ';\n' 
 function replaceFunctionWhereNeeded(line, orig, funcname) {
 	if(line.indexOf(orig) == -1)
 		return line;
-	var outputVal = "" + line.replace(orig, funcname + "(");
-	outputVal += ");\n";
+	var outputVal = "\n" + line.replace(orig, funcname + "(");
+	outputVal += ");";
 	return outputVal;
 }
+
