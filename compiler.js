@@ -43,7 +43,7 @@ function parseScript(){
 		script[i] = "\t" + line;
 	}
 	
-	var output = script.join("");
+	var output = script.join("\n");
 	output = "\n/* Converted by Duckuino:"
 			 +"\n* https://forums.hak5.org/index.php?/topic/32719-payload-converter-duckuino-duckyscript-to-arduino/?p=244590"
 			 +"\n* Enjoy!"
@@ -98,8 +98,8 @@ function replaceSpecial(line) {
 			line = replaceValWhereNeeded(line, "MENU", "Mouse.press(MOUSE_LEFT);\n	Mouse.release(MOUSE_LEFT);");
 			line = replaceValWhereNeeded(line, "SHIFT", "\npress(KEY_LEFT_SHIFT);");
 			line = replaceValWhereNeeded(line, "ALT", "\npress(KEY_LEFT_ALT);");
-			line = replaceValWhereNeeded(line, "CONTROL", "\npress(KEY_LEFT_CTRL);");
 			line = replaceValWhereNeeded(line, "CTRL", "\npress(KEY_LEFT_CTRL);");
+			line = replaceValWhereNeeded(line, "CONTROL", "\npress(KEY_LEFT_CTRL);");
 			line = replaceValWhereNeeded(line, "ESC", "\npress(KEY_LEFT_ESC);");
 			line = replaceValWhereNeeded(line, "END", "\npress(KEY_END);");
 			line = replaceValWhereNeeded(line, "SPACE", "\npress(' ');");
