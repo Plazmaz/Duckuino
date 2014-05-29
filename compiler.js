@@ -38,8 +38,11 @@ function parseScript(){
 		if(isModifier)
 			keysToPress = pressKeys(keysToPress);
 		line = replaceSpecial(line);
+		
 		if(isModifier)
 			line += keysToPress + "\nKeyboard.releaseAll();";
+		else
+			line += keysToPress;
 		script[i] = "\t" + line;
 	}
 	
@@ -72,13 +75,13 @@ function parseScript(){
  */
 function replaceSpecial(line) {
 		if(!isModifierFunction(line)) {
+			line = replaceValWhereNeeded(line, "CTRL", "\ntype(KEY_LEFT_CTRL);");
+			line = replaceValWhereNeeded(line, "CONTROL", "\ntype(KEY_LEFT_CTRL);");
 			line = replaceValWhereNeeded(line, "GUI", "\ntype(KEY_LEFT_GUI);");
 			line = replaceValWhereNeeded(line, "WINDOWS", "\ntype(KEY_LEFT_GUI);");
 			line = replaceValWhereNeeded(line, "MENU", "Mouse.press(MOUSE_LEFT);\n	Mouse.release(MOUSE_LEFT);");
 			line = replaceValWhereNeeded(line, "SHIFT", "\ntype(KEY_LEFT_SHIFT);");
 			line = replaceValWhereNeeded(line, "ALT", "\ntype(KEY_LEFT_ALT);");
-			line = replaceValWhereNeeded(line, "CTRL", "\ntype(KEY_LEFT_CTRL);");
-			line = replaceValWhereNeeded(line, "CONTROL", "\ntype(KEY_LEFT_CTRL);");
 			line = replaceValWhereNeeded(line, "ESC", "\ntype(KEY_LEFT_ESC);");
 			line = replaceValWhereNeeded(line, "END", "\ntype(KEY_END);");
 			line = replaceValWhereNeeded(line, "SPACE", "\ntype(' ');");
@@ -93,13 +96,13 @@ function replaceSpecial(line) {
 			line = replaceValWhereNeeded(line, "CAPSLOCK", "\ntype(KEY_CAPS_LOCK);");
 			line = replaceValWhereNeeded(line, "DELETE", "\ntype(KEY_DELETE);")
 		} else {
+			line = replaceValWhereNeeded(line, "CTRL", "\npress(KEY_LEFT_CTRL);");
+			line = replaceValWhereNeeded(line, "CONTROL", "\npress(KEY_LEFT_CTRL);");
 			line = replaceValWhereNeeded(line, "GUI", "\npress(KEY_LEFT_GUI);");
 			line = replaceValWhereNeeded(line, "WINDOWS", "\npress(KEY_LEFT_GUI);");
 			line = replaceValWhereNeeded(line, "MENU", "Mouse.press(MOUSE_LEFT);\n	Mouse.release(MOUSE_LEFT);");
 			line = replaceValWhereNeeded(line, "SHIFT", "\npress(KEY_LEFT_SHIFT);");
 			line = replaceValWhereNeeded(line, "ALT", "\npress(KEY_LEFT_ALT);");
-			line = replaceValWhereNeeded(line, "CTRL", "\npress(KEY_LEFT_CTRL);");
-			line = replaceValWhereNeeded(line, "CONTROL", "\npress(KEY_LEFT_CTRL);");
 			line = replaceValWhereNeeded(line, "ESC", "\npress(KEY_LEFT_ESC);");
 			line = replaceValWhereNeeded(line, "END", "\npress(KEY_END);");
 			line = replaceValWhereNeeded(line, "SPACE", "\npress(' ');");
@@ -156,6 +159,8 @@ function pressKeys(keys) {
 		}
 		keys = keys.replace(/\\/g, "\\\\");
 		keys = keys.replace(/"/g, "\\\"");
+		if(keys.charAt(1) == '')
+			return keyStr;
 		if(!hasFoundSpecial) {
 			keyStr += "\npress('" + keys.charAt(1) + "');";
 		}
@@ -168,7 +173,7 @@ function replaceValWhereNeeded(line, orig, replacement) {
 	return line.replace(orig, replacement);
 }
 function isModifierFunction(line) {
-	return functions.indexOf(line.split(" ")[0]) != -1;
+	return functions.indexOf(JSON.parse(JSON.stringify(line)).trim().split(" ")[0]) != -1;
 }
 //A similar function to replaceValWhereNeeded, but surrounding arguments with parentheses and adding ';\n' 
 function replaceFunctionWhereNeeded(line, orig, funcname) {
