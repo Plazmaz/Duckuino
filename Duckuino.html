@@ -3,8 +3,12 @@
 		<script src="compiler.js"></script>
 	</head>
 	<body>
-		<textarea id="duckyscript" style="width: 300px; height: 600px;"></textarea>
-		<textarea id="arduinoout" style="width: 300px; height: 600px;"></textarea>
+		<div style="vertical-align: middle;">
+			<label for="duckyscript">Input duckyscript:</label>
+			<textarea id="duckyscript" style="width: 300px; height: 500px;"></textarea>
+			<label for="arduinoout">Result:</label>
+			<textarea readonly id="arduinoout" style="width: 300px; height: 500px;"></textarea>
+		</div>
 		<br><button onclick="parseScript()">Compile</button>
 	</body>
 </html>
