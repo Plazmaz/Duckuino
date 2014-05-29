@@ -1,4 +1,4 @@
-	var functions = ["ALT", "GUI", "CTRL", "CONTROL", "SHIFT", "WINDOWS", "MENU", "ESC", "END", "SPACE", "TAB", "PRINTSCREEN",
+	var functions = ["ALT", "GUI", "CTRL", "CONTROL", "SHIFT", "WINDOWS", "MENU", "ESC", "END", "SPACE", "TAB", "PRINTSCREEN", "ENTER",
 									"UPARROW", "DOWNARROW", "LEFTARROW", "RIGHTARROW", "CAPSLOCK", "DELETE", "DELAY"];
 	
 function parseScript(){
@@ -22,6 +22,11 @@ function parseScript(){
 			script[i] = line;
 			continue;
 		};
+		if(line.substr(0, 3) === "REM") {
+			line = line.replace("REM ", "//");
+			script[i] = line;
+			continue;
+		}
 		for(var j = 0; j < 12; j++) {
 			line = replaceValWhereNeeded(line, "F" + j, "Keyboard.press(KEY_F" + j + ");");
 		}
@@ -31,16 +36,19 @@ function parseScript(){
 			}
 		}
 		if(isModifier)
-			keysToPress = pressKeys(keysToPress.trim());
+			keysToPress = pressKeys(keysToPress);
 		line = replaceSpecial(line);
 		if(isModifier)
 			line += keysToPress + "\nKeyboard.releaseAll();";
-		line = line;
 		script[i] = "\t" + line;
 	}
 	
-	var output = script.join("").trim();
-	output = "void setup() {"
+	var output = script.join("");
+	output = "\n/* Converted by Duckuino:"
+			 +"\n* https://forums.hak5.org/index.php?/topic/32719-payload-converter-duckuino-duckyscript-to-arduino/?p=244590"
+			 +"\n* Enjoy!"
+			 +"\n*/"
+			 + "\nvoid setup() {"
 			 + "\n	Keyboard.begin();"
 			 + "\n" + output;
 	output += "Keyboard.end();"+
@@ -63,10 +71,6 @@ function parseScript(){
  * Insert all proper special characters on 'line'
  */
 function replaceSpecial(line) {
-		if(line.substr(0, 3) === "REM") {
-			line = line.replace("REM ", "//");
-			return line;
-		}
 		if(!isModifierFunction(line)) {
 			line = replaceValWhereNeeded(line, "GUI", "\ntype(KEY_LEFT_GUI);");
 			line = replaceValWhereNeeded(line, "WINDOWS", "\ntype(KEY_LEFT_GUI);");
@@ -146,13 +150,14 @@ function pressKeys(keys) {
 			if(keys.indexOf(functions[i]) != -1) {
 				keys = keys.replace(functions[i], "");
 				hasFoundSpecial = true;
+				console.log("Found special!");
 				keyStr += "\n" + functions[i];
 			}
 		}
 		keys = keys.replace(/\\/g, "\\\\");
 		keys = keys.replace(/"/g, "\\\"");
 		if(!hasFoundSpecial) {
-			keyStr += "\npress('" + keys + "');";
+			keyStr += "\npress('" + keys.charAt(1) + "');";
 		}
 		return keyStr;
 }
