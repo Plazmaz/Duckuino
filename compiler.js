@@ -6,30 +6,36 @@ function parseScript(){
 	var script = input.split('\n');
 	for(var i = 0; i < script.length; i++) {
 		var line = script[i];
-		var isModifier = isModifierFunction(line);
+		var isModifier = isModifierFunction(script[i]);
 		line = line.replace("\n", "").trim();
-		var keysToPress = "";
+		var keysToPress = JSON.parse(JSON.stringify(line));
 		for(var j = 0; j < functions.length; j++) {
-			keysToPress.replace(functions[j], "");
+			keysToPress = keysToPress.replace(functions[j], "");
 		}
-		script[i] = line;
 		if(line.substr(0, 6) === "STRING") {
-			line = pressKeys(line.replace(" ", "").substr(6));
+			line = printKeys(line.replace(" ", "").substr(6));
+			script[i] = line;
+			continue;
 		};
 		for(var j = 0; j < 12; j++) {
 			line = replaceValWhereNeeded(line, "F" + j, "Keyboard.press(KEY_F" + j + ");");
 		}
+		for(var j = 0; j < line.split(" ").length; j++) {	//Cleanup time!
+			if(functions.indexOf(line.split(" ")[j]) <= -1) {
+				line = line.replace(line.split(" ")[j], "");
+			}
+		}
 		if(isModifier)
-			keysToPress = pressKeys(keysToPress);
+			keysToPress = pressKeys(keysToPress.trim());
 		line = replaceSpecial(line);
 		if(isModifier)
 			line += keysToPress + "\nKeyboard.releaseAll();";
-		line += "\n";
+		line = line;
 		script[i] = "\t" + line;
 	}
 	
-	var output = script.join("\n");
-	output = "\nvoid setup() {"
+	var output = script.join("").trim();
+	output = "void setup() {"
 			 + "\n	Keyboard.begin();"
 			 + "\n" + output;
 	output += "Keyboard.end();"+
@@ -37,6 +43,9 @@ function parseScript(){
 	output +="\nvoid type(int key) {"
 			 + "\n	Keyboard.press(key);"
 			 + "\n	Keyboard.release(key);"
+			 +"\n}";
+	output +="\nvoid press(int key) {"
+			 + "\n	Keyboard.press(key);"
 			 +"\n}";
 	 output +="\nvoid print(const __FlashStringHelper *value) {"	//This is used to reduce the amount of memory strings take.
 		 		+"\n	Keyboard.print(value);"
@@ -114,9 +123,17 @@ function typeKeys(keys) {
 		}
 		return keyStr;
 }
+//Press and release keys to form a string
+function printKeys(keys) {
+		var keyStr = "";
+		keys = keys.replace(/\\/g, "\\\\");
+		keys = keys.replace(/"/g, "\\\"");
+		keyStr = "\nprint(F(\""+keys+"\"));"
+		return keyStr;
+}
 //Press a key down, but don't release it yet
 function pressKeys(keys) {
-		if(keys === '') { //Just to be sure.
+		if(keys === keys.trim()) { //Just to be sure.
 			return "";
 		}
 		var keyStr = "";
@@ -131,7 +148,7 @@ function pressKeys(keys) {
 		keys = keys.replace(/\\/g, "\\\\");
 		keys = keys.replace(/"/g, "\\\"");
 		if(!hasFoundSpecial) {
-			keyStr += "\nprint(F(\"" + keys + "\"));";
+			keyStr += "\npress('" + keys + "');";
 		}
 		return keyStr;
 }
