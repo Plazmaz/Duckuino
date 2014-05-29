@@ -1,5 +1,5 @@
-	var specialCodes = ["ALT", "GUI", "CTRL", "CONTROL", "SHIFT", "WINDOWS", "MENU", "STRING", "DELAY", "ESC", "END", "SPACE", "TAB", "PRINTSCREEN",
-									"UPARROW", "DOWNARROW", "LEFTARROW", "RIGHTARROW", "CAPSLOCK", "DELETE", "ENTER"];
+	var specialCodes = ["GUI", "CTRL", "CONTROL", "SHIFT", "WINDOWS", "MENU", "STRING", "DELAY", "ESC", "END", "SPACE", "TAB", "PRINTSCREEN",
+									"UPARROW", "DOWNARROW", "LEFTARROW", "RIGHTARROW", "CAPSLOCK", "DELETE", "ENTER", "ALT"];
 	
 function parseScript(){
 	var input = document.getElementById("duckyscript").value;
@@ -39,7 +39,8 @@ function parseScript(){
 	output = "\nvoid setup() {"
 			 + "\n	Keyboard.begin();"
 			 + "\n" + output;
-	output += "}";
+	output += "Keyboard.end();"+
+				"\n}";
 	output +="\nvoid type(int key) {"
 			 + "\n	Keyboard.press(key);"
 			 + "\n	Keyboard.release(key);"
@@ -47,6 +48,7 @@ function parseScript(){
 	 output +="\nvoid print(const __FlashStringHelper *value) {"	//This is used to reduce the amount of memory strings take.
 		 		+"\n	Keyboard.print(value);"
 				+"\n}";
+	
 	output +="\nvoid loop(){}"
 	document.getElementById("arduinoout").textContent = output;
 }
@@ -66,6 +68,7 @@ function replaceSpecial(line) {
 		//line = replaceValWhereNeeded(line, /[CTRL|CONTROL]/g, "type(KEY_LEFT_CTRL);");
 		line = replaceValWhereNeeded(line, "ESC", "type(KEY_LEFT_ESC);");
 		line = replaceValWhereNeeded(line, "END", "type(KEY_END);");
+		line = replaceValWhereNeeded(line, "ALT", "type(KEY_LEFT_ALT);");
 		line = replaceValWhereNeeded(line, "SPACE", "type(' ');");
 		line = replaceValWhereNeeded(line, "ENTER", "type(KEY_RETURN);");
 		line = replaceValWhereNeeded(line, "TAB", "type(KEY_TAB);");
