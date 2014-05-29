@@ -1,5 +1,5 @@
 	var functions = ["ALT", "GUI", "CTRL", "CONTROL", "SHIFT", "WINDOWS", "MENU", "ESC", "END", "SPACE", "TAB", "PRINTSCREEN",
-									"UPARROW", "DOWNARROW", "LEFTARROW", "RIGHTARROW", "CAPSLOCK", "DELETE"];
+									"UPARROW", "DOWNARROW", "LEFTARROW", "RIGHTARROW", "CAPSLOCK", "DELETE", "DELAY"];
 	
 function parseScript(){
 	var input = document.getElementById("duckyscript").value;
@@ -9,11 +9,16 @@ function parseScript(){
 		var isModifier = isModifierFunction(script[i]);
 		line = line.replace("\n", "").trim();
 		var keysToPress = JSON.parse(JSON.stringify(line));
-		for(var j = 0; j < functions.length; j++) {
+		for(var j = 0; j <= functions.length; j++) {
 			keysToPress = keysToPress.replace(functions[j], "");
 		}
 		if(line.substr(0, 6) === "STRING") {
 			line = printKeys(line.replace(" ", "").substr(6));
+			script[i] = line;
+			continue;
+		};
+		if(line.substr(0, 5) === "DELAY") {
+			line = replaceFunctionWhereNeeded(line, "DELAY ", "delay");
 			script[i] = line;
 			continue;
 		};
@@ -106,7 +111,6 @@ function replaceSpecial(line) {
 			line = replaceValWhereNeeded(line, "DELETE", "\npress(KEY_DELETE);")
 
 		}
-			line = "	" + replaceFunctionWhereNeeded(line, "DELAY ", "delay");
 		return line
 }
 //Press and release keys
