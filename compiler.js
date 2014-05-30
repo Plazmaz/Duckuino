@@ -1,6 +1,11 @@
-	var functions = ["ALT", "GUI", "CTRL", "CONTROL", "SHIFT", "WINDOWS", "MENU", "ESC", "END", "SPACE", "TAB", "PRINTSCREEN", "ENTER",
-									"UPARROW", "DOWNARROW", "LEFTARROW", "RIGHTARROW", "CAPSLOCK", "DELETE", "DELAY"];
-	
+	var functions = ["ALT", "GUI", "CTRL", "CONTROL", "SHIFT", "WINDOWS", "COMMAND", "MENU", "ESC", "END", "SPACE", "TAB", "PRINTSCREEN", "ENTER",
+									"UPARROW", "DOWNARROW", "LEFTARROW", "RIGHTARROW", "CAPSLOCK", "DELETE"];
+	var mappings = ["KEY_LEFT_ALT", "KEY_LEFT_GUI", "KEY_LEFT_CTRL", "KEY_LEFT_CTRL", "KEY_LEFT_SHIFT", "KEY_LEFT_GUI", "KEY_LEFT_GUI", "229", 
+	"KEY_LEFT_ESC", "KEY_END", "' '", "KEY_TAB", "206", "KEY_RETURN", "KEY_UP_ARROW", "KEY_DOWN_ARROW", "KEY_LEFT_ARROW", "KEY_RIGHT_ARROW", "KEY_CAPS_LOCK", "KEY_DELETE"]; 
+														  //the 229 is due to
+													      //arduino's conversion method, it's the mapping
+														  //for key code 93 or the menu key.
+														  //The same concept applies to 206 and the printscreen key.
 function parseScript(){
 	var input = document.getElementById("duckyscript").value;
 	var script = input.split('\n');
@@ -30,20 +35,18 @@ function parseScript(){
 		for(var j = 0; j < 12; j++) {
 			line = replaceValWhereNeeded(line, "F" + j, "Keyboard.press(KEY_F" + j + ");");
 		}
-		for(var j = 0; j < line.split(" ").length; j++) {	//Cleanup time!
+		/*for(var j = 0; j < line.split(" ").length; j++) {	//Cleanup time! here we're removing all functions that aren't inserted by us
 			if(functions.indexOf(line.split(" ")[j]) <= -1) {
 				line = line.replace(line.split(" ")[j], "");
 			}
-		}
+		}*/
 		if(isModifier)
 			keysToPress = pressKeys(keysToPress);
-		line = replaceSpecial(line);
+		line = insertFunctions(line);
 		
 		if(isModifier)
 			line += keysToPress + "\nKeyboard.releaseAll();";
-		else
-			line += keysToPress;
-		script[i] = "\t" + line;
+		script[i] = "    " + line;
 	}
 	
 	var output = script.join("\n");
@@ -54,7 +57,7 @@ function parseScript(){
 			 + "\nvoid setup() {"
 			 + "\n	Keyboard.begin();"
 			 + "\n" + output;
-	output += "Keyboard.end();"+
+	output += "\nKeyboard.end();"+
 				"\n}";
 	output +="\nvoid type(int key) {"
 			 + "\n	Keyboard.press(key);"
@@ -71,51 +74,17 @@ function parseScript(){
 	document.getElementById("arduinoout").textContent = output;
 }
 /*
- * Insert all proper special characters on 'line'
+ * Insert all proper functions on 'line'
  */
-function replaceSpecial(line) {
+function insertFunctions(line) {
 		if(!isModifierFunction(line)) {
-			line = replaceValWhereNeeded(line, "CTRL", "\ntype(KEY_LEFT_CTRL);");
-			line = replaceValWhereNeeded(line, "CONTROL", "\ntype(KEY_LEFT_CTRL);");
-			line = replaceValWhereNeeded(line, "GUI", "\ntype(KEY_LEFT_GUI);");
-			line = replaceValWhereNeeded(line, "WINDOWS", "\ntype(KEY_LEFT_GUI);");
-			line = replaceValWhereNeeded(line, "MENU", "Mouse.press(MOUSE_LEFT);\n	Mouse.release(MOUSE_LEFT);");
-			line = replaceValWhereNeeded(line, "SHIFT", "\ntype(KEY_LEFT_SHIFT);");
-			line = replaceValWhereNeeded(line, "ALT", "\ntype(KEY_LEFT_ALT);");
-			line = replaceValWhereNeeded(line, "ESC", "\ntype(KEY_LEFT_ESC);");
-			line = replaceValWhereNeeded(line, "END", "\ntype(KEY_END);");
-			line = replaceValWhereNeeded(line, "SPACE", "\ntype(' ');");
-			line = replaceValWhereNeeded(line, "ENTER", "\ntype(KEY_RETURN);");
-			line = replaceValWhereNeeded(line, "TAB", "\ntype(KEY_TAB);");
-			line = replaceValWhereNeeded(line, "PRINTSCREEN", "\ntype(206);");
-			
-			line = replaceValWhereNeeded(line, "UPARROW", "   type(KEY_UP_ARROW);");
-			line = replaceValWhereNeeded(line, "DOWNARROW", "\ntype(KEY_DOWN_ARROW);");
-			line = replaceValWhereNeeded(line, "LEFTARROW", "\ntype(KEY_LEFT_ARROW);");
-			line = replaceValWhereNeeded(line, "RIGHTARROW", "\ntype(KEY_RIGHT_ARROW);");
-			line = replaceValWhereNeeded(line, "CAPSLOCK", "\ntype(KEY_CAPS_LOCK);");
-			line = replaceValWhereNeeded(line, "DELETE", "\ntype(KEY_DELETE);")
+			for(var i = 0; i < mappings.length; i++) {	//not functions.length so we don't deal with delay here.
+				line = replaceValWhereNeeded(line, functions[i], "\ntype(" + mappings[i] + ");");
+			}
 		} else {
-			line = replaceValWhereNeeded(line, "CTRL", "\npress(KEY_LEFT_CTRL);");
-			line = replaceValWhereNeeded(line, "CONTROL", "\npress(KEY_LEFT_CTRL);");
-			line = replaceValWhereNeeded(line, "GUI", "\npress(KEY_LEFT_GUI);");
-			line = replaceValWhereNeeded(line, "WINDOWS", "\npress(KEY_LEFT_GUI);");
-			line = replaceValWhereNeeded(line, "MENU", "Mouse.press(MOUSE_LEFT);\n	Mouse.release(MOUSE_LEFT);");
-			line = replaceValWhereNeeded(line, "SHIFT", "\npress(KEY_LEFT_SHIFT);");
-			line = replaceValWhereNeeded(line, "ALT", "\npress(KEY_LEFT_ALT);");
-			line = replaceValWhereNeeded(line, "ESC", "\npress(KEY_LEFT_ESC);");
-			line = replaceValWhereNeeded(line, "END", "\npress(KEY_END);");
-			line = replaceValWhereNeeded(line, "SPACE", "\npress(' ');");
-			line = replaceValWhereNeeded(line, "ENTER", "\npress(KEY_RETURN);");
-			line = replaceValWhereNeeded(line, "TAB", "\npress(KEY_TAB);");
-			line = replaceValWhereNeeded(line, "PRINTSCREEN", "\npress(206);");
-			
-			line = replaceValWhereNeeded(line, "UPARROW", "\npress(KEY_UP_ARROW);");
-			line = replaceValWhereNeeded(line, "DOWNARROW", "\npress(KEY_DOWN_ARROW);");
-			line = replaceValWhereNeeded(line, "LEFTARROW", "\npress(KEY_LEFT_ARROW);");
-			line = replaceValWhereNeeded(line, "RIGHTARROW", "\npress(KEY_RIGHT_ARROW);");
-			line = replaceValWhereNeeded(line, "CAPSLOCK", "\npress(KEY_CAPS_LOCK);");
-			line = replaceValWhereNeeded(line, "DELETE", "\npress(KEY_DELETE);")
+			for(var i = 0; i < mappings.length; i++) {	//not functions.length so we don't deal with delay here.
+				line = replaceValWhereNeeded(line, functions[i], "\npress(" + mappings[i] + ");");
+			}
 
 		}
 		return line
