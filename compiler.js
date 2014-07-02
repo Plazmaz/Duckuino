@@ -8,48 +8,48 @@
 														  //The same concept applies to 206 and the printscreen key.
 function parseScript(){
 	var input = document.getElementById("duckyscript").value;
-	var script = input.split('\n');
-	for(var i = 0; i < script.length; i++) {
-		var line = script[i];
-		var isModifier = isModifierFunction(script[i]);
-		line = line.replace("\n", "").trim();
+	var lines = input.split('\n');
+	lines = cleanDuplicateFunctions(lines);
+	var outputLines = [];
+	for(var i = 0; i < lines.length; i++) {
+		var line = lines[i].trim();
+		var firstWord = line.split(" ",1)[0];
+		
+		switch(firstWord) {
+			case "STRING": {
+				line = printKeys(line.replace(" ", "").substr(6));
+				outputLines[i] = line;
+				break;
+			};
+			case "DELAY": {
+				line = replaceFunctionWhereNeeded(line, "DELAY ", "delay");
+				outputLines[i] = line;
+				break;
+			};
+			case "REM": {
+				line = line.replace("REM ", "//");
+				outputLines[i] = line;
+				break;
+			}
+		}
+		if(firstWord === "STRING" || firstWord === "DELAY" || firstWord === "REM")
+			continue;
+		line = line.replace(/ F([0-9]{1,2})([$\s])/g, "Keyboard.press(KEY_F$1);$2" );
+		var isModifier = functions.indexOf(firstWord) > -1;
 		var keysToPress = JSON.parse(JSON.stringify(line));
 		for(var j = 0; j <= functions.length; j++) {
 			keysToPress = keysToPress.replace(functions[j], "");
 		}
-		if(line.substr(0, 6) === "STRING") {
-			line = printKeys(line.replace(" ", "").substr(6));
-			script[i] = line;
-			continue;
-		};
-		if(line.substr(0, 5) === "DELAY") {
-			line = replaceFunctionWhereNeeded(line, "DELAY ", "delay");
-			script[i] = line;
-			continue;
-		};
-		if(line.substr(0, 3) === "REM") {
-			line = line.replace("REM ", "//");
-			script[i] = line;
-			continue;
-		}
-		for(var j = 0; j < 12; j++) {
-			line = replaceValWhereNeeded(line, "F" + j, "Keyboard.press(KEY_F" + j + ");");
-		}
-		/*for(var j = 0; j < line.split(" ").length; j++) {	//Cleanup time! here we're removing all functions that aren't inserted by us
-			if(functions.indexOf(line.split(" ")[j]) <= -1) {
-				line = line.replace(line.split(" ")[j], "");
-			}
-		}*/
 		if(isModifier)
 			keysToPress = pressKeys(keysToPress);
 		line = insertFunctions(line);
 		
-		if(isModifier)
-			line += keysToPress + "\nKeyboard.releaseAll();";
-		script[i] = "    " + line;
+		if(isModifier) {
+			line = line.split(" ")[0] + keysToPress + "\nKeyboard.releaseAll();";
+		}
+		outputLines[i] = "    " + line;
 	}
-	
-	var output = script.join("\n");
+	var output = outputLines.join("\n");
 	output = "\n/* Converted by Duckuino:"
 			 +"\n* https://forums.hak5.org/index.php?/topic/32719-payload-converter-duckuino-duckyscript-to-arduino/?p=244590"
 			 +"\n* Enjoy!"
@@ -59,12 +59,10 @@ function parseScript(){
 			 + "\n" + output;
 	output += "\nKeyboard.end();"+
 				"\n}";
-	output +="\nvoid type(int key) {"
+	output +="\nvoid type(int key, boolean release) {"
 			 + "\n	Keyboard.press(key);"
-			 + "\n	Keyboard.release(key);"
-			 +"\n}";
-	output +="\nvoid press(int key) {"
-			 + "\n	Keyboard.press(key);"
+			 +"\n	if(release)"
+			 + "\n		Keyboard.release(key);"
 			 +"\n}";
 	 output +="\nvoid print(const __FlashStringHelper *value) {"	//This is used to reduce the amount of memory strings take.
 		 		+"\n	Keyboard.print(value);"
@@ -77,13 +75,14 @@ function parseScript(){
  * Insert all proper functions on 'line'
  */
 function insertFunctions(line) {
-		if(!isModifierFunction(line)) {
+		var firstWord = line.split(" ",1)[0];
+		if(functions.indexOf(firstWord) == -1) {
 			for(var i = 0; i < mappings.length; i++) {	//not functions.length so we don't deal with delay here.
-				line = replaceValWhereNeeded(line, functions[i], "\ntype(" + mappings[i] + ");");
+				line = replaceValWhereNeeded(line, functions[i], "\ntype(" + mappings[i] + ",false);");
 			}
 		} else {
 			for(var i = 0; i < mappings.length; i++) {	//not functions.length so we don't deal with delay here.
-				line = replaceValWhereNeeded(line, functions[i], "\npress(" + mappings[i] + ");");
+				line = replaceValWhereNeeded(line, functions[i], "\ntype(" + mappings[i] + ",false);");
 			}
 
 		}
@@ -99,7 +98,7 @@ function typeKeys(keys) {
 			if(keys.charAt(i) == ' ')
 				continue;
 			keyStr += i != 0 ? "\n" : "";
-			keyStr += "\n 	type(" + keys.charCodeAt(i) + ");";
+			keyStr += "\n 	type(" + keys.charCodeAt(i) + ",true);";
 		}
 		return keyStr;
 }
@@ -111,7 +110,7 @@ function printKeys(keys) {
 		keyStr = "\nprint(F(\""+keys+"\"));"
 		return keyStr;
 }
-//Press a key down, but don't release it yet
+//Press a key down, but don't release it just yet
 function pressKeys(keys) {
 		if(keys === keys.trim()) { //Just to be sure.
 			return "";
@@ -131,7 +130,7 @@ function pressKeys(keys) {
 		if(keys.charAt(1) == '')
 			return keyStr;
 		if(!hasFoundSpecial) {
-			keyStr += "\npress('" + keys.charAt(1) + "');";
+			keyStr += "\ntype('" + keys.charAt(1) + "',false);";
 		}
 		return keyStr;
 }
@@ -141,15 +140,46 @@ function replaceValWhereNeeded(line, orig, replacement) {
 		return line;
 	return line.replace(orig, replacement);
 }
-function isModifierFunction(line) {
-	return functions.indexOf(JSON.parse(JSON.stringify(line)).trim().split(" ")[0]) != -1;
-}
 //A similar function to replaceValWhereNeeded, but surrounding arguments with parentheses and adding ';\n' 
 function replaceFunctionWhereNeeded(line, orig, funcname) {
 	if(line.indexOf(orig) == -1)
 		return line;
-	var outputVal = "\n" + line.replace(orig, funcname + "(");
+	var outputVal = line.replace(orig, funcname + "(");
 	outputVal += ");";
 	return outputVal;
 }
-
+function cleanDuplicateFunctions(lines) {
+	var tmpLines = lines;
+	var blocks = generateFunctionBlocks(tmpLines);
+	for(var i = 0; i < blocks.length; i++) {
+		tmpLines.splice(blocks[i].index, blocks[i].length, "for(int i = 0; i < "+blocks[i].length + "; i++) { ", blocks[i].func, "}");
+	}
+	return tmpLines;
+}
+function generateFunctionBlocks(lines) {
+	var tmpLines = lines;
+	var blocks = [];
+	for(var i = 0; i < tmpLines.length-1; i++) {
+		if(tmpLines[i+1] === tmpLines[i]) {
+			var block = blockFactoryGo();
+			block.index = i;
+			var blockLen = 1;
+			while(tmpLines[i+blockLen] === tmpLines[i]) {
+				blockLen++;
+			}
+			block.func = tmpLines[i];
+			block.length = blockLen;
+			blocks.push(block);
+			i+=blockLen;
+		}
+	}
+	return blocks;
+}
+function blockFactoryGo() {
+	var block = {
+		func: "",
+		index: 0,
+		length: 0
+	}
+	return block
+}
