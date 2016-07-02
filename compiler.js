@@ -12,7 +12,7 @@ function parseScript(){
 	lines = cleanDuplicateFunctions(lines);
 	var outputLines = [];
 	for(var i = 0; i < lines.length; i++) {
-		var line = lines[i].trim();
+		var line = lines[i].trim().toUpperCase();
 		var firstWord = line.split(" ",1)[0];
 		
 		switch(firstWord) {
