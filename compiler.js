@@ -8,11 +8,11 @@
 														  //The same concept applies to 206 and the printscreen key.
 function parseScript(){
 	var input = document.getElementById("duckyscript").value;
-	var lines = input.split('\n').toUpperCase();
+	var lines = input.split('\n');
 	lines = cleanDuplicateFunctions(lines);
 	var outputLines = [];
 	for(var i = 0; i < lines.length; i++) {
-		var line = lines[i].trim();
+		var line = lines[i].trim().toUpperCase();
 		var firstWord = line.split(" ",1)[0];
 		
 		switch(firstWord) {
