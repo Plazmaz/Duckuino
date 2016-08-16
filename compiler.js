@@ -8,7 +8,7 @@
 														  //The same concept applies to 206 and the printscreen key.
 function parseScript(){
 	var input = document.getElementById("duckyscript").value;
-	var lines = input.split('\n').toUpperCase();
+	var lines = input.toUpperCase().split('\n');
 	lines = cleanDuplicateFunctions(lines);
 	var outputLines = [];
 	for(var i = 0; i < lines.length; i++) {
