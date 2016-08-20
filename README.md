@@ -1,3 +1,5 @@
+# This project is no longer mainained. Please see [Thecakeisgit's project](https://github.com/Thecakeisgit/DuckuinoPlus) as an alternative.
+
 Duckuino
 ========
 
