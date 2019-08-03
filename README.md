@@ -1,4 +1,4 @@
-# This project is no longer mainained. Please see [Nurrl's repo](https://github.com/Nurrl/Duckuino).
+# This project is no longer mainained. Please see [The new repo](https://github.com/Dukweeno/Duckuino).
 
 Duckuino
 ========
